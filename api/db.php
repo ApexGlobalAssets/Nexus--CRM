@@ -20,8 +20,17 @@ function jsonOut($data, int $code = 200): void {
     exit;
 }
 
+function startSession(): void {
+    ini_set('session.cookie_secure', '0');
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.cookie_samesite', 'Lax');
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+}
+
 function requireAuth(): array {
-    session_start();
+    startSession();
     if (empty($_SESSION['user'])) {
         jsonOut(['error' => 'Unauthorized'], 401);
     }
