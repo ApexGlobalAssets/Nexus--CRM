@@ -1,4 +1,4 @@
-sname: Build & Deploy to Ionos
+name: Build & Deploy to Ionos
 
 on:
   push:
