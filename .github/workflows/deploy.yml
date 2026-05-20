@@ -1,4 +1,4 @@
-name: Build & Deploy to Ionos
+sname: Build & Deploy to Ionos
 
 on:
   push:
@@ -51,4 +51,4 @@ jobs:
           sudo apt-get install -y sshpass rsync
           sshpass -p "$SFTP_PASS" rsync -avz --delete \
             -e "ssh -o StrictHostKeyChecking=no -p 22" \
-            dist/ "${SFTP_USER}@${SFTP_HOST}:/"
+            dist/ "${SFTP_USER}@${SFTP_HOST}:/nexuscrm/"
