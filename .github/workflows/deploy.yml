@@ -52,3 +52,4 @@ jobs:
           sshpass -p "$SFTP_PASS" rsync -avz --delete \
             -e "ssh -o StrictHostKeyChecking=no -p 22" \
             dist/ "${SFTP_USER}@${SFTP_HOST}:/nexuscrm/"
+ 
