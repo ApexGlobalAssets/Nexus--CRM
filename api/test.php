@@ -1,13 +1,14 @@
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-require_once __DIR__ . '/config.php';
-echo "Host: " . DB_HOST . "\n";
-echo "DB: " . DB_NAME . "\n";
-echo "User: " . DB_USER . "\n";
+require_once __DIR__ . '/db.php';
+echo "db.php loaded OK\n";
+echo "PHP version: " . phpversion() . "\n";
 try {
-    $pdo = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4', DB_USER, DB_PASS);
+    $db = getDb();
     echo "DB connected OK\n";
+    $row = $db->query('SELECT COUNT(*) as c FROM users')->fetch();
+    echo "Users in DB: " . $row['c'] . "\n";
 } catch (Exception $e) {
-    echo "DB error: " . $e->getMessage() . "\n";
+    echo "Error: " . $e->getMessage() . "\n";
 }
