@@ -1,17 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  LoginPage, Dashboard, ContactDetail, Contacts, Companies, Pipeline,
-  ActivitiesTasks, Proposals, Invoices, Campaigns, Integrations,
-  AIAssistant, LeadForms, SettingsPage
+  LoginPage, Dashboard, ContactsPage, CompaniesPage, PipelinePage,
+  ActivitiesPage, ProposalsPage, InvoicesPage, CampaignsPage,
+  ImportPage, IntegrationsPage, AIAssistant, SettingsPage
 } from "./components.jsx";
-import { LayoutDashboard, Users, Building2, Layers, Activity, ClipboardList, FileText, Mail, Zap, Sparkles, LayoutGrid, Settings } from "lucide-react";
-
-// Demo accounts shown on the login page (auth is server-side)
-const DEMO_USERS = [
-  { id:1, name:"Alex Morgan",  role:"admin", email:"alex@nexuscrm.io",   password:"admin123", commissionRate:0   },
-  { id:2, name:"Sarah Chen",   role:"sales", email:"sarah@nexuscrm.io",  password:"sarah123", commissionRate:7.5 },
-  { id:3, name:"James Wilson", role:"sales", email:"james@nexuscrm.io",  password:"james123", commissionRate:5.0 },
-];
+import { LayoutDashboard, Users, Building2, Layers, Activity,
+  ClipboardList, FileText, Mail, Zap, Sparkles, Upload, Settings } from "lucide-react";
 
 const NAV = [
   {id:"dashboard",    label:"Dashboard",    icon:LayoutDashboard},
@@ -22,16 +16,13 @@ const NAV = [
   {id:"proposals",    label:"Proposals",    icon:ClipboardList},
   {id:"invoices",     label:"Invoices",     icon:FileText},
   {id:"campaigns",    label:"Campaigns",    icon:Mail},
+  {id:"import",       label:"Import",       icon:Upload},
   {id:"integrations", label:"Integrations", icon:Zap},
   {id:"ai",           label:"AI Assistant", icon:Sparkles},
-  {id:"leadforms",    label:"Lead Forms",   icon:LayoutGrid},
   {id:"settings",     label:"Settings",     icon:Settings},
 ];
 
-// Detects adds/deletes/updates between two state snapshots and fires API calls.
-// On add, updates local state with the server-assigned ID.
 function syncDiff(endpoint, prev, next, rawSetter) {
-  // Added
   next.filter(n => !prev.find(p => p.id === n.id)).forEach(async item => {
     try {
       const r = await fetch(`/api/${endpoint}.php`, {
@@ -47,13 +38,11 @@ function syncDiff(endpoint, prev, next, rawSetter) {
     } catch (e) { console.error(e); }
   });
 
-  // Deleted
   prev.filter(p => !next.find(n => n.id === p.id)).forEach(item => {
     fetch(`/api/${endpoint}.php?id=${item.id}`, { method: "DELETE", credentials: "include" })
       .catch(console.error);
   });
 
-  // Updated
   next.filter(n => {
     const old = prev.find(p => p.id === n.id);
     return old && JSON.stringify(old) !== JSON.stringify(n);
@@ -81,7 +70,6 @@ export default function App() {
   const [notes,       setNotesRaw]       = useState([]);
   const dataReady = useRef(false);
 
-  // Check for existing session on mount
   useEffect(() => {
     fetch("/api/auth.php", { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
@@ -89,7 +77,6 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // Load all data when user logs in
   useEffect(() => {
     if (!currentUser) return;
     dataReady.current = false;
@@ -111,7 +98,6 @@ export default function App() {
     ]).then(() => { dataReady.current = true; });
   }, [currentUser]);
 
-  // Factory: wraps a raw setter to also sync changes to the API
   const makeSet = (rawSetter, endpoint) => updater => {
     rawSetter(prev => {
       const next = typeof updater === "function" ? updater(prev) : updater;
@@ -131,7 +117,7 @@ export default function App() {
   const setProposals  = makeSet(setProposalsRaw,   "proposals");
   const setNotes      = makeSet(setNotesRaw,       "notes");
 
-  const login  = u  => { setCurrentUser(u); setPage("dashboard"); };
+  const login  = u => { setCurrentUser(u); setPage("dashboard"); };
   const logout = () => {
     fetch("/api/auth.php", { method: "DELETE", credentials: "include" }).catch(() => {});
     setCurrentUser(null);
@@ -141,20 +127,21 @@ export default function App() {
       .forEach(s => s([]));
   };
 
-  if (!currentUser) return <LoginPage onLogin={login} users={DEMO_USERS} />;
+  const updateProfile = (updated) => {
+    setCurrentUser(u => ({ ...u, ...updated }));
+  };
 
-  const openTasks = tasks.filter(t =>
-    (currentUser.role === "admin" || t.owner === currentUser.id) && t.status === "open"
-  );
+  if (!currentUser) return <LoginPage onLogin={login} />;
+
+  const openTasks = tasks.filter(t => t.status !== "done" && t.status !== "completed");
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden" style={{fontFamily:"Inter,system-ui,sans-serif"}}>
-      {/* Sidebar */}
       <div className="w-52 bg-white border-r border-gray-100 flex flex-col py-4 flex-shrink-0">
         <div className="px-4 mb-5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
-              <Settings size={15} className="text-white"/>
+              <Layers size={15} className="text-white"/>
             </div>
             <span className="font-bold text-gray-900 text-sm">NexusCRM</span>
           </div>
@@ -179,7 +166,7 @@ export default function App() {
         <div className="px-2 pt-3 border-t border-gray-50 space-y-1">
           <button onClick={() => setPage("settings")}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-all">
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 bg-indigo-500`}>
+            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 bg-indigo-500">
               {(currentUser.name||"?").split(" ").map(n=>n[0]).join("").slice(0,2)}
             </div>
             <div className="flex-1 text-left min-w-0">
@@ -194,21 +181,20 @@ export default function App() {
         </div>
       </div>
 
-      {/* Main content */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 max-w-6xl mx-auto">
           {page==="dashboard"    && <Dashboard user={currentUser} users={users} contacts={contacts} deals={deals} invoices={invoices} activities={activities} tasks={tasks}/>}
-          {page==="contacts"     && <Contacts user={currentUser} contacts={contacts} setContacts={setContacts} activities={activities} setActivities={setActivities} notes={notes} setNotes={setNotes}/>}
-          {page==="companies"    && <Companies user={currentUser} companies={companies} setCompanies={setCompanies}/>}
-          {page==="pipeline"     && <Pipeline user={currentUser} deals={deals} setDeals={setDeals}/>}
-          {page==="activities"   && <ActivitiesTasks user={currentUser} activities={activities} setActivities={setActivities} tasks={tasks} setTasks={setTasks}/>}
-          {page==="proposals"    && <Proposals proposals={proposals} setProposals={setProposals} setInvoices={setInvoices} setPage={setPage}/>}
-          {page==="invoices"     && <Invoices invoices={invoices} setInvoices={setInvoices}/>}
-          {page==="campaigns"    && <Campaigns campaigns={campaigns} setCampaigns={setCampaigns}/>}
-          {page==="integrations" && <Integrations/>}
-          {page==="ai"           && <AIAssistant contacts={contacts} deals={deals}/>}
-          {page==="leadforms"    && <LeadForms contacts={contacts} setContacts={setContacts}/>}
-          {page==="settings"     && <SettingsPage user={currentUser} users={users} setUsers={setUsers} deals={deals} onLogout={logout}/>}
+          {page==="contacts"     && <ContactsPage contacts={contacts} setContacts={setContacts} companies={companies} notes={notes} setNotes={setNotes} deals={deals} activities={activities}/>}
+          {page==="companies"    && <CompaniesPage companies={companies} setCompanies={setCompanies} contacts={contacts}/>}
+          {page==="pipeline"     && <PipelinePage deals={deals} setDeals={setDeals} contacts={contacts} companies={companies} users={users}/>}
+          {page==="activities"   && <ActivitiesPage activities={activities} setActivities={setActivities} contacts={contacts} companies={companies} users={users} currentUser={currentUser}/>}
+          {page==="proposals"    && <ProposalsPage proposals={proposals} setProposals={setProposals} contacts={contacts} companies={companies}/>}
+          {page==="invoices"     && <InvoicesPage invoices={invoices} setInvoices={setInvoices} contacts={contacts} companies={companies}/>}
+          {page==="campaigns"    && <CampaignsPage campaigns={campaigns} setCampaigns={setCampaigns} contacts={contacts}/>}
+          {page==="import"       && <ImportPage contacts={contacts} setContacts={setContacts} companies={companies} setCompanies={setCompanies}/>}
+          {page==="integrations" && <IntegrationsPage/>}
+          {page==="ai"           && <AIAssistant currentUser={currentUser}/>}
+          {page==="settings"     && <SettingsPage user={currentUser} users={users} setUsers={setUsers} deals={deals} onLogout={logout} onUpdateProfile={updateProfile}/>}
         </div>
       </div>
     </div>

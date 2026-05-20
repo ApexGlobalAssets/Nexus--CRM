@@ -131,4 +131,5 @@ CREATE TABLE IF NOT EXISTS notes (
 INSERT INTO users (name, email, password_hash, role, commission_rate) VALUES
 ('Alex Morgan',  'alex@nexuscrm.io',   '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 0.00),
 ('Sarah Chen',   'sarah@nexuscrm.io',  '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'sales', 7.50),
-('James Wilson', 'james@nexuscrm.io',  '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'sales', 5.00);
+('James Wilson', 'james@nexuscrm.io',  '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'sales', 5.00),
+('Ryan Hughes',  'ryan@apexglobalasset.com', '$2b$12$iqwymaIbB53q6qE9UzwK7.X6hYJCyuW1sXzihOoG6rUO4nrDyDpK2', 'admin', 0.00);
