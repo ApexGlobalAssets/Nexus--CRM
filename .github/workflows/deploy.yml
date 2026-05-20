@@ -27,14 +27,21 @@ jobs:
       - name: Copy PHP API into build folder
         run: |
           cp -r api dist/api
-          cat > dist/api/config.php << EOF
-          <?php
-          define('DB_HOST', '${DB_HOST}');
-          define('DB_NAME', '${DB_NAME}');
-          define('DB_USER', '${DB_USER}');
-          define('DB_PASS', '${DB_PASS}');
-          define('ANTHROPIC_API_KEY', '${ANTHROPIC_API_KEY}');
-          EOF
+          python3 - << 'PYEOF'
+          import os, json
+          vals = {
+            'DB_HOST': os.environ['DB_HOST'],
+            'DB_NAME': os.environ['DB_NAME'],
+            'DB_USER': os.environ['DB_USER'],
+            'DB_PASS': os.environ['DB_PASS'],
+            'ANTHROPIC_API_KEY': os.environ.get('ANTHROPIC_API_KEY', ''),
+          }
+          lines = ['<?php']
+          for k, v in vals.items():
+            lines.append("define('{}', {});".format(k, json.dumps(v)))
+          with open('dist/api/config.php', 'w') as f:
+            f.write('\n'.join(lines) + '\n')
+          PYEOF
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_NAME: ${{ secrets.DB_NAME }}
@@ -52,4 +59,3 @@ jobs:
           sshpass -p "$SFTP_PASS" rsync -avz --delete \
             -e "ssh -o StrictHostKeyChecking=no -p 22" \
             dist/ "${SFTP_USER}@${SFTP_HOST}:/nexuscrm/"
- 
