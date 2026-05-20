@@ -1,0 +1,21 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # API requests: pass through to PHP files
+    RewriteCond %{REQUEST_URI} ^/api/
+    RewriteRule ^ - [L]
+
+    # Let existing files and directories through
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Everything else → index.html (React SPA)
+    RewriteRule ^ index.html [QSA,L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>
