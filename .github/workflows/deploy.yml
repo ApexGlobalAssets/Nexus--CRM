@@ -42,21 +42,13 @@ jobs:
           DB_PASS: ${{ secrets.DB_PASS }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
-      - name: Deploy via FTP to Ionos
+      - name: Deploy via SFTP to Ionos
         env:
-          FTP_HOST: ${{ secrets.FTP_HOST }}
-          FTP_USER: ${{ secrets.FTP_USER }}
-          FTP_PASS: ${{ secrets.FTP_PASS }}
+          SFTP_HOST: ${{ secrets.FTP_HOST }}
+          SFTP_USER: ${{ secrets.FTP_USER }}
+          SFTP_PASS: ${{ secrets.FTP_PASS }}
         run: |
-          find dist -type f | while IFS= read -r file; do
-            remote="${file#dist/}"
-            echo "Uploading: $remote"
-            curl --ipv4 --silent --show-error \
-              --connect-timeout 15 \
-              --max-time 60 \
-              --ftp-create-dirs \
-              --upload-file "$file" \
-              "ftp://${FTP_HOST}/${remote}" \
-              --user "${FTP_USER}:${FTP_PASS}"
-          done
-          echo "Deploy complete."
+          sudo apt-get install -y sshpass rsync
+          sshpass -p "$SFTP_PASS" rsync -avz --delete \
+            -e "ssh -o StrictHostKeyChecking=no -p 22" \
+            dist/ "${SFTP_USER}@${SFTP_HOST}:/"
