@@ -4,7 +4,7 @@ import {
   DollarSign, Plus, Search, X, Edit2, Trash2, Phone, MessageCircle, Globe,
   Building2, Calendar, Send, Check, ChevronDown, Sparkles, Copy, FileText,
   Activity, Star, Repeat, Upload, Download, AlertCircle, CheckCircle,
-  Percent, UserPlus, LogOut, RefreshCw, Zap, Link2, Clock, Tag
+  Percent, UserPlus, LogOut, RefreshCw, Zap, Link2, Clock, Tag, Pencil
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
@@ -1251,6 +1251,7 @@ export function SettingsPage({ user, users, setUsers, deals, onLogout, onUpdateP
   const blankUser = { name: "", email: "", password: "", role: "sales", commissionRate: 10 };
   const [newUser, setNewUser] = useState(blankUser);
   const [addingUser, setAddingUser] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
 
   const saveProfile = async () => {
     if (onUpdateProfile) onUpdateProfile(profile);
@@ -1276,6 +1277,19 @@ export function SettingsPage({ user, users, setUsers, deals, onLogout, onUpdateP
     if (!confirm("Delete this user?")) return;
     try { await fetch(`/api/users.php?id=${id}`, { method: "DELETE", credentials: "include" }); } catch (e) { }
     setUsers(p => p.filter(u => u.id !== id));
+  };
+
+  const saveEditUser = async () => {
+    if (!editingUser) return;
+    try {
+      await fetch(`/api/users.php?id=${editingUser.id}`, {
+        method: "PUT", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingUser),
+      });
+      setUsers(p => p.map(u => u.id === editingUser.id ? editingUser : u));
+    } catch (e) {}
+    setEditingUser(null);
   };
 
   const salesUsers = (users || []).filter(u => u.role === "sales");
@@ -1327,11 +1341,28 @@ export function SettingsPage({ user, users, setUsers, deals, onLogout, onUpdateP
                   <div className="col-span-4 text-xs text-gray-500 truncate">{u.email}</div>
                   <div className="col-span-2"><Badge label={u.role} /></div>
                   <div className="col-span-1 text-xs text-gray-500">{u.commissionRate != null ? `${u.commissionRate}%` : "—"}</div>
-                  <div className="col-span-1 flex justify-end">{u.id !== user?.id && <button onClick={() => deleteUser(u.id)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={12} /></button>}</div>
+                  <div className="col-span-1 flex justify-end gap-1">
+                    <button onClick={() => setEditingUser({...u})} className="p-1 text-gray-400 hover:text-indigo-500"><Pencil size={12} /></button>
+                    {u.id !== user?.id && <button onClick={() => deleteUser(u.id)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={12} /></button>}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {editingUser && (
+            <div className="bg-white rounded-2xl border border-indigo-200 shadow-sm p-4">
+              <p className="text-sm font-semibold text-gray-700 mb-3">Edit User — {editingUser.name}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <Inp label="Full Name" value={editingUser.name} onChange={e => setEditingUser(p => ({ ...p, name: e.target.value }))} />
+                <Inp label="Email" value={editingUser.email} onChange={e => setEditingUser(p => ({ ...p, email: e.target.value }))} />
+                <Sel label="Role" opts={["admin", "sales"]} value={editingUser.role} onChange={e => setEditingUser(p => ({ ...p, role: e.target.value }))} />
+                <Inp label="Commission Rate %" type="number" value={editingUser.commissionRate} onChange={e => setEditingUser(p => ({ ...p, commissionRate: Number(e.target.value) }))} />
+                <Inp label="New Password (optional)" type="password" value={editingUser.password || ""} onChange={e => setEditingUser(p => ({ ...p, password: e.target.value }))} placeholder="Leave blank to keep current" />
+              </div>
+              <div className="flex gap-2 mt-3"><Btn onClick={saveEditUser}>Save Changes</Btn><Btn variant="outline" onClick={() => setEditingUser(null)}>Cancel</Btn></div>
+            </div>
+          )}
 
           {!addingUser ? (
             <Btn onClick={() => setAddingUser(true)}><UserPlus size={14} />Add User</Btn>
