@@ -13,25 +13,25 @@ if ($method === 'GET') {
     $user['role'] === 'admin' ? $stmt->execute() : $stmt->execute([$user['id']]);
     $rows = $stmt->fetchAll();
     foreach ($rows as &$r) {
-        $r['owner'] = (int)$r['owner_id'];
-        $r['value'] = (float)$r['value'];
-        $r['prob']  = (int)$r['prob'];
+        $r['owner']    = (int)$r['owner_id'];
+        $r['value']    = (float)$r['deal_value'];
+        $r['prob']     = (int)$r['prob'];
         $r['pipeline'] = (int)$r['pipeline_id'];
-        $r['close'] = $r['close_date'];
+        $r['close']    = $r['close_date'];
     }
     jsonOut($rows);
 }
 
 if ($method === 'POST') {
     $b = body();
-    $stmt = $db->prepare('INSERT INTO deals (title,value,stage,company,contact,owner_id,prob,close_date,pipeline_id) VALUES (?,?,?,?,?,?,?,?,?)');
+    $stmt = $db->prepare('INSERT INTO deals (title,deal_value,stage,company,contact,owner_id,prob,close_date,pipeline_id) VALUES (?,?,?,?,?,?,?,?,?)');
     $stmt->execute([$b['title'],$b['value']??0,$b['stage']??'Lead',$b['company']??'',$b['contact']??'',$b['owner']??$user['id'],$b['prob']??50,$b['close']??null,$b['pipeline']??1]);
     jsonOut(['id' => (int)$db->lastInsertId()]);
 }
 
 if ($method === 'PUT' && $id) {
     $b = body();
-    $db->prepare('UPDATE deals SET title=?,value=?,stage=?,company=?,contact=?,prob=?,close_date=?,pipeline_id=? WHERE id=?')
+    $db->prepare('UPDATE deals SET title=?,deal_value=?,stage=?,company=?,contact=?,prob=?,close_date=?,pipeline_id=? WHERE id=?')
        ->execute([$b['title'],$b['value'],$b['stage'],$b['company'],$b['contact'],$b['prob'],$b['close']??null,$b['pipeline'],$id]);
     jsonOut(['ok' => true]);
 }

@@ -7,25 +7,30 @@ $id     = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
 if ($method === 'GET') {
     $sql = $user['role'] === 'admin'
-        ? 'SELECT * FROM activities ORDER BY date DESC, id DESC'
-        : 'SELECT * FROM activities WHERE owner_id = ? ORDER BY date DESC, id DESC';
+        ? 'SELECT * FROM activities ORDER BY activity_date DESC, id DESC'
+        : 'SELECT * FROM activities WHERE owner_id = ? ORDER BY activity_date DESC, id DESC';
     $stmt = $db->prepare($sql);
     $user['role'] === 'admin' ? $stmt->execute() : $stmt->execute([$user['id']]);
     $rows = $stmt->fetchAll();
-    foreach ($rows as &$r) { $r['owner'] = (int)$r['owner_id']; }
+    foreach ($rows as &$r) {
+        $r['owner'] = (int)$r['owner_id'];
+        $r['type']  = $r['activity_type'];
+        $r['date']  = $r['activity_date'];
+        $r['time']  = $r['activity_time'];
+    }
     jsonOut($rows);
 }
 
 if ($method === 'POST') {
     $b = body();
-    $stmt = $db->prepare('INSERT INTO activities (type,contact,company,date,time,duration,outcome,notes,owner_id) VALUES (?,?,?,?,?,?,?,?,?)');
+    $stmt = $db->prepare('INSERT INTO activities (activity_type,contact,company,activity_date,activity_time,duration,outcome,notes,owner_id) VALUES (?,?,?,?,?,?,?,?,?)');
     $stmt->execute([$b['type']??'Note',$b['contact']??'',$b['company']??'',$b['date']??date('Y-m-d'),$b['time']??'',$b['duration']??'',$b['outcome']??'',$b['notes']??'',$b['owner']??$user['id']]);
     jsonOut(['id' => (int)$db->lastInsertId()]);
 }
 
 if ($method === 'PUT' && $id) {
     $b = body();
-    $db->prepare('UPDATE activities SET type=?,contact=?,company=?,date=?,time=?,duration=?,outcome=?,notes=? WHERE id=?')
+    $db->prepare('UPDATE activities SET activity_type=?,contact=?,company=?,activity_date=?,activity_time=?,duration=?,outcome=?,notes=? WHERE id=?')
        ->execute([$b['type'],$b['contact'],$b['company'],$b['date'],$b['time'],$b['duration'],$b['outcome'],$b['notes'],$id]);
     jsonOut(['ok' => true]);
 }

@@ -11,20 +11,21 @@ if ($method === 'GET') {
         $r['sent']    = (int)$r['sent'];
         $r['opened']  = (int)$r['opened'];
         $r['clicked'] = (int)$r['clicked'];
+        $r['date']    = $r['send_date'];
     }
     jsonOut($rows);
 }
 
 if ($method === 'POST') {
     $b = body();
-    $stmt = $db->prepare('INSERT INTO campaigns (name,status,sent,opened,clicked,subject,date,segment) VALUES (?,?,?,?,?,?,?,?)');
+    $stmt = $db->prepare('INSERT INTO campaigns (name,status,sent,opened,clicked,subject,send_date,segment) VALUES (?,?,?,?,?,?,?,?)');
     $stmt->execute([$b['name'],$b['status']??'draft',0,0,0,$b['subject']??'',$b['date']??null,$b['segment']??'All Contacts']);
     jsonOut(['id' => (int)$db->lastInsertId()]);
 }
 
 if ($method === 'PUT' && $id) {
     $b = body();
-    $db->prepare('UPDATE campaigns SET name=?,status=?,sent=?,opened=?,clicked=?,subject=?,date=?,segment=? WHERE id=?')
+    $db->prepare('UPDATE campaigns SET name=?,status=?,sent=?,opened=?,clicked=?,subject=?,send_date=?,segment=? WHERE id=?')
        ->execute([$b['name'],$b['status'],$b['sent']??0,$b['opened']??0,$b['clicked']??0,$b['subject'],$b['date']??null,$b['segment'],$id]);
     jsonOut(['ok' => true]);
 }
