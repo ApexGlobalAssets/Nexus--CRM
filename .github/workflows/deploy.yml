@@ -43,12 +43,20 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Deploy via FTP to Ionos
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASS: ${{ secrets.FTP_PASS }}
         run: |
-          sudo apt-get install -y lftp
-          lftp -c "
-            set net:prefer-ipv4 true;
-            set ftp:ssl-allow yes;
-            set ssl:verify-certificate no;
-            open -u '${{ secrets.FTP_USER }}','${{ secrets.FTP_PASS }}' ${{ secrets.FTP_HOST }};
-            mirror --reverse --delete --verbose --exclude=\.git dist/ /;
-          "
+          find dist -type f | while IFS= read -r file; do
+            remote="${file#dist/}"
+            echo "Uploading: $remote"
+            curl --ipv4 --silent --show-error \
+              --connect-timeout 15 \
+              --max-time 60 \
+              --ftp-create-dirs \
+              --upload-file "$file" \
+              "ftp://${FTP_HOST}/${remote}" \
+              --user "${FTP_USER}:${FTP_PASS}"
+          done
+          echo "Deploy complete."
