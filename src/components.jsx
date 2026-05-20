@@ -1267,7 +1267,7 @@ export function SettingsPage({ user, users, setUsers, deals, onLogout, onUpdateP
     try {
       const r = await fetch("/api/users.php", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(u) });
       const created = await r.json();
-      setUsers(p => [...p, created.id ? created : u]);
+      setUsers(p => [...p, created.id ? { ...u, id: created.id } : u]);
     } catch (e) { setUsers(p => [...p, u]); }
     setNewUser(blankUser); setAddingUser(false);
   };
